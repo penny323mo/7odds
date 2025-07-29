@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>足球賠率篩選工具 (修正版)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+</head>
+<body class="p-3">
+<h3 class="text-center mb-4">足球賠率篩選工具</h3>
+<div class="container">
+  <div class="mb-3">
+    <label class="form-label">博彩公司：</label>
+    <select id="companySel" class="form-select"></select>
+  </div>
+  <div class="card mb-4">
+    <div class="card-header">初盤</div>
+    <div class="card-body row g-3">
+      <div class="col-12"><label class="form-label">盤口</label><select id="openHandicapSel" class="form-select"></select></div>
+      <div class="col-6"><input id="openHomeMin" placeholder="主賠 min" type="number" class="form-control" step="0.01"></div>
+      <div class="col-6"><input id="openHomeMax" placeholder="主賠 max" type="number" class="form-control" step="0.01"></div>
+      <div class="col-6"><input id="openAwayMin" placeholder="客賠 min" type="number" class="form-control" step="0.01"></div>
+      <div class="col-6"><input id="openAwayMax" placeholder="客賠 max" type="number" class="form-control" step="0.01"></div>
+    </div>
+  </div>
+  <div class="card mb-4">
+    <div class="card-header">終盤</div>
+    <div class="card-body row g-3">
+      <div class="col-12"><label class="form-label">盤口</label><select id="closeHandicapSel" class="form-select"></select></div>
+      <div class="col-6"><input id="closeHomeMin" placeholder="主賠 min" type="number" class="form-control" step="0.01"></div>
+      <div class="col-6"><input id="closeHomeMax" placeholder="主賠 max" type="number" class="form-control" step="0.01"></div>
+      <div class="col-6"><input id="closeAwayMin" placeholder="客賠 min" type="number" class="form-control" step="0.01"></div>
+      <div class="col-6"><input id="closeAwayMax" placeholder="客賠 max" type="number" class="form-control" step="0.01"></div>
+    </div>
+  </div>
+  <div class="text-center mb-3"><button id="searchBtn" class="btn btn-primary">搜尋</button></div>
+  <h6 id="summary" class="text-center mb-2"></h6>
+  <canvas id="resultChart" height="130" class="mb-3"></canvas>
+  <div class="table-responsive">
+    <table id="resultTable" class="table table-bordered table-sm text-nowrap align-middle">
+      <thead class="table-light"><tr id="theadRow"></tr></thead>
+      <tbody id="tbodyRows"></tbody>
+    </table>
+  </div>
+</div>
+<script>
+// 檔案地圖
+const fileMap={Bet365:['Bet365_1.json','Bet365_2.json','Bet365_3.json','Bet365_4.json'],
+Crown:['Crown_1.json','Crown_2.json','Crown_3.json','Crown_4.json'],
+Interwetten:['Interwetten_1.json','Interwetten_2.json','Interwetten_3.json'],
+JC:['JC_1.json','JC_2.json','JC_3.json'],
+Ladbrokes:['Ladbrokes_1.json','Ladbrokes_2.json','Ladbrokes_3.json'],
+Macauslot:['Macauslot_1.json','Macauslot_2.json','Macauslot_3.json','Macauslot_4.json'],
+WilliamHill:['WilliamHill_1.json','WilliamHill_2.json','WilliamHill_3.json']};
+
+// 讓球對照 (節錄)
+const hcapMap={'平手':0,'平手/半球':-0.25,'受平/半':0.25,'半球':-0.5,'受半球':0.5,'半/一':-0.75,'受半/一':0.75,'一球':-1,'受一球':1};
+// ---------
+let allMatches=[],chart;
+
+async function load(company){
+  const files=fileMap[company]||[];const arr=[];
+  for(const f of files){try{const r=await fetch(f);if(r.ok){arr.push(...await r.json())}}catch(e){console.error(e)}}
+  allMatches=arr;populateHandicap();buildHead();apply();
+}
+function populateHandicap(){const s1=o('openHandicapSel'),s2=o('closeHandicapSel');const set=new Set(allMatches.flatMap(x=>[x.ah_open_line,x.ah_close_line]));const opts=[...set].filter(Boolean).sort((a,b)=>(hcapMap[a]??0)-(hcapMap[b]??0));const html=['<option value="">全部</option>',...opts.map(x=>`<option>${x}</option>`)].join('');s1.innerHTML=html;s2.innerHTML=html;}
+function buildHead(){o('theadRow').innerHTML=['日期','賽事','初盤','初主賠','初客賠','終盤','終主賠','終客賠','結果'].map(t=>`<th>${t}</th>`).join('');}
+function apply(){const ol=o('openHandicapSel').value,cl=o('closeHandicapSel').value;
+const ohMin=v('openHomeMin',-1e9),ohMax=v('openHomeMax',1e9),oaMin=v('openAwayMin',-1e9),oaMax=v('openAwayMax',1e9),
+chMin=v('closeHomeMin',-1e9),chMax=v('closeHomeMax',1e9),caMin=v('closeAwayMin',-1e9),caMax=v('closeAwayMax',1e9);
+let win=0,draw=0,lose=0;const rows=[];
+allMatches.forEach(m=>{
+ if(ol&&m.ah_open_line!==ol)return;
+ if(cl&&m.ah_close_line!==cl)return;
+ if(!(m.ah_open_home_odds>=ohMin&&m.ah_open_home_odds<=ohMax))return;
+ if(!(m.ah_open_away_odds>=oaMin&&m.ah_open_away_odds<=oaMax))return;
+ if(!(m.ah_close_home_odds>=chMin&&m.ah_close_home_odds<=chMax))return;
+ if(!(m.ah_close_away_odds>=caMin&&m.ah_close_away_odds<=caMax))return;
+ const [sh,sa]=m.full_time_score.split(':').map(Number);const res=sh-sa+(hcapMap[m.ah_close_line]??0);
+ const out=res>0?'Win':res===0?'Draw':'Lose'; if(out==='Win')win++;else if(out==='Draw')draw++;else lose++;
+ rows.push(`<tr><td>${m.match_datetime}</td><td>${m.home_team} vs ${m.away_team}</td><td>${m.ah_open_line}</td><td>${m.ah_open_home_odds}</td><td>${m.ah_open_away_odds}</td><td>${m.ah_close_line}</td><td>${m.ah_close_home_odds}</td><td>${m.ah_close_away_odds}</td><td>${out}</td></tr>`);
+});
+o('tbodyRows').innerHTML=rows.join('');
+const tot=win+draw+lose||1;o('summary').textContent=`Win ${win} (${(win/tot*100).toFixed(1)}%) / Draw ${draw} (${(draw/tot*100).toFixed(1)}%) / Lose ${lose} (${(lose/tot*100).toFixed(1)}%) 總 ${tot}`;
+renderChart(win,draw,lose);
+}
+function renderChart(w,d,l){const ctx=o('resultChart');chart&&chart.destroy();chart=new Chart(ctx,{type:'pie',data:{labels:['Win','Draw','Lose'],datasets:[{data:[w,d,l]}]},options:{plugins:{legend:{position:'bottom'}}}});}
+function o(id){return document.getElementById(id);}function v(id,def){return parseFloat(o(id).value)||def;}
+document.addEventListener('DOMContentLoaded',()=>{
+ Object.keys(fileMap).forEach(c=>o('companySel').insertAdjacentHTML('beforeend',`<option>${c}</option>`));
+ o('companySel').addEventListener('change',e=>load(e.target.value));
+ o('searchBtn').addEventListener('click',apply);o('companySel').dispatchEvent(new Event('change'));
+});
+</script>
+</body></html>
