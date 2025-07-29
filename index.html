@@ -4,169 +4,280 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>足球賠率篩選工具</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; }
-    header { background:#3366cc; color:#fff; padding:10px; text-align:center; }
-    nav { display:flex; background:#fff; border-bottom:1px solid #ccc; }
-    nav a { flex:1; padding:10px; text-align:center; text-decoration:none; color:#333; }
-    nav a.active { border-bottom:3px solid #3366cc; color:#3366cc; }
-    .tab { display:none; padding:10px; }
-    .tab.active { display:block; }
-    .filter-group { margin-bottom:20px; }
-    .filter-group label { display:block; margin:5px 0; }
-    .results { margin-top:20px; }
-    table { width:100%; border-collapse:collapse; }
-    th, td { border:1px solid #ccc; padding:5px; text-align:center; }
+    body { padding-top: 1.5rem; }
+    .form-section { margin-bottom: 1rem; }
+    #chart-container { width: 200px; margin: 1rem auto; }
+    table th, table td { white-space: nowrap; }
   </style>
 </head>
 <body>
-<header>
-  <h1>足球賠率篩選工具</h1>
-</header>
-<nav>
-  <a href="#" id="tab-asian-link" class="active">亞洲盤查詢</a>
-  <a href="#" id="tab-ou-link">大小球查詢</a>
-  <a href="#" id="tab-euro-link">歐洲盤查詢</a>
-</nav>
+  <div class="container">
+    <h2 class="text-center mb-4">足球賠率篩選工具</h2>
 
-<!-- 版本時間 -->
-<div style="text-align:center; padding:8px 0; font-size:0.9em; color:#666;">
-  版本時間：2025/07/27 下午09:30:00 (GMT+8)
-</div>
+    <!-- 公司選擇 -->
+    <div class="form-group row">
+      <label class="col-sm-2 col-form-label">博彩公司：</label>
+      <div class="col-sm-4">
+        <select id="companySelect" class="form-control"></select>
+      </div>
+    </div>
 
-<!-- 亞洲盤 Tab -->
-<div id="tab-asian" class="tab active">
-  <div class="filter-group">
-    <label>博彩公司：
-      <select id="bookieSelect"></select>
-    </label>
+    <!-- 初盤 -->
+    <div class="form-section border p-3">
+      <h5>初盤</h5>
+      <div class="form-row">
+        <div class="form-group col-md-2">
+          <label>盤口</label>
+          <select id="initialHandicap" class="form-control"></select>
+        </div>
+        <div class="form-group col-md-2">
+          <label>主隊賠率 (min)</label>
+          <input id="initialHomeMin" type="number" step="0.01" class="form-control" placeholder="最小值">
+        </div>
+        <div class="form-group col-md-2">
+          <label>主隊賠率 (max)</label>
+          <input id="initialHomeMax" type="number" step="0.01" class="form-control" placeholder="最大值">
+        </div>
+        <div class="form-group col-md-2">
+          <label>客隊賠率 (min)</label>
+          <input id="initialAwayMin" type="number" step="0.01" class="form-control" placeholder="最小值">
+        </div>
+        <div class="form-group col-md-2">
+          <label>客隊賠率 (max)</label>
+          <input id="initialAwayMax" type="number" step="0.01" class="form-control" placeholder="最大值">
+        </div>
+      </div>
+    </div>
+
+    <!-- 終盤 -->
+    <div class="form-section border p-3">
+      <h5>終盤</h5>
+      <div class="form-row">
+        <div class="form-group col-md-2">
+          <label>盤口</label>
+          <select id="finalHandicap" class="form-control"></select>
+        </div>
+        <div class="form-group col-md-2">
+          <label>主隊賠率 (min)</label>
+          <input id="finalHomeMin" type="number" step="0.01" class="form-control" placeholder="最小值">
+        </div>
+        <div class="form-group col-md-2">
+          <label>主隊賠率 (max)</label>
+          <input id="finalHomeMax" type="number" step="0.01" class="form-control" placeholder="最大值">
+        </div>
+        <div class="form-group col-md-2">
+          <label>客隊賠率 (min)</label>
+          <input id="finalAwayMin" type="number" step="0.01" class="form-control" placeholder="最小值">
+        </div>
+        <div class="form-group col-md-2">
+          <label>客隊賠率 (max)</label>
+          <input id="finalAwayMax" type="number" step="0.01" class="form-control" placeholder="最大值">
+        </div>
+      </div>
+    </div>
+
+    <!-- 搜尋按鈕 -->
+    <div class="text-center mb-4">
+      <button id="searchBtn" class="btn btn-primary">搜尋</button>
+    </div>
+
+    <!-- 統計 -->
+    <div class="text-center mb-4">
+      <span id="statWin">贏盤 0 (0%)</span> /
+      <span id="statDraw">和盤 0 (0%)</span> /
+      <span id="statLose">輸盤 0 (0%)</span>
+    </div>
+    <div id="chart-container">
+      <canvas id="resultChart"></canvas>
+    </div>
+
+    <!-- 結果表格 -->
+    <div class="table-responsive">
+      <table id="resultTable" class="table table-striped table-sm">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>比賽</th>
+            <th>初盤</th>
+            <th>初主賠</th>
+            <th>初客賠</th>
+            <th>終盤</th>
+            <th>終主賠</th>
+            <th>終客賠</th>
+            <th>結果</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
-  <div class="filter-group">
-    <label>盤口：<select id="asianHandicap"></select></label>
-    <label>主隊賠率：<input id="asianHomeMin" placeholder="最小值"> - <input id="asianHomeMax" placeholder="最大值"></label>
-    <label>客隊賠率：<input id="asianAwayMin" placeholder="最小值"> - <input id="asianAwayMax" placeholder="最大值"></label>
-  </div>
-  <button id="asianSearchBtn">搜尋</button>
-  <div class="results">
-    <canvas id="asianChart" style="max-width:400px; margin:20px auto;"></canvas>
-    <div id="asianStats" style="text-align:center;"></div>
-    <table id="asianTable">
-      <thead><tr>
-        <th>比賽日期</th><th>比賽</th><th>初盤盤口</th><th>初盤主隊賠率</th><th>初盤客隊賠率</th>
-        <th>終盤盤口</th><th>終盤主隊賠率</th><th>終盤客隊賠率</th><th>盤口勝負</th>
-      </tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
 
-<!-- 大小球 Tab -->
-<div id="tab-ou" class="tab">
-  <!-- 類似亞洲盤結構 -->
-  <p>大小球功能待實作...</p>
-</div>
-<!-- 歐洲盤 Tab -->
-<div id="tab-euro" class="tab">
-  <!-- 類似亞洲盤結構 -->
-  <p>歐洲盤功能待實作...</p>
-</div>
+  <!-- 依賴 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // ==== 檔案映射（按照你上傳的分割檔名） ====
+    const fileMap = {
+      Bet365:      ['Bet365_1.json','Bet365_2.json','Bet365_3.json','Bet365_4.json'],
+      Crown:       ['Crown_1.json','Crown_2.json','Crown_3.json','Crown_4.json'],
+      Interwetten:['Interwetten_1.json','Interwetten_2.json','Interwetten_3.json'],
+      JC:          ['JC_1.json','JC_2.json','JC_3.json'],
+      Ladbrokes:   ['Ladbrokes_1.json','Ladbrokes_2.json','Ladbrokes_3.json'],
+      Macauslot:   ['Macauslot_1.json','Macauslot_2.json','Macauslot_3.json','Macauslot_4.json'],
+      WilliamHill: ['WilliamHill_1.json','WilliamHill_2.json','WilliamHill_3.json'],
+    };
 
-<script>
-// JSON 檔案對應
-const fileMap = {
-  Bet365: { asian:["Bet365_1.json","Bet365_2.json","Bet365_3.json","Bet365_4.json"] },
-  Crown:  { asian:["Crown_1.json","Crown_2.json","Crown_3.json","Crown_4.json"] },
-  Interwetten:{ asian:["Interwetten_1.json","Interwetten_2.json","Interwetten_3.json"] },
-  JC:     { asian:["JC_1.json","JC_2.json","JC_3.json"] },
-  Ladbrokes:{ asian:["Ladbrokes_1.json","Ladbrokes_2.json","Ladbrokes_3.json"] },
-  Macauslot:{ asian:["Macauslot_1.json","Macauslot_2.json","Macauslot_3.json","Macauslot_4.json"] },
-  WilliamHill:{ asian:["WilliamHill_1.json","WilliamHill_2.json","WilliamHill_3.json"] }
-};
-let AData = [];
+    // 全局變數
+    let currentData = [];
 
-function loadDataForCompany(bk) {
-  const files = fileMap[bk].asian;
-  return Promise.all(files.map(f => fetch(f).then(r=>r.json()))).then(arr=> {
-    AData = arr.flat();
-  });
-}
+    // 1. 初始化公司下拉
+    function initCompanySelect() {
+      const sel = document.getElementById('companySelect');
+      sel.innerHTML = '<option disabled selected>請選擇</option>';
+      Object.keys(fileMap).forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        sel.appendChild(o);
+      });
+      sel.addEventListener('change', onCompanyChange);
+    }
 
-function initAsian() {
-  const sel = document.getElementById("asianHandicap");
-  sel.innerHTML = '<option value="">--</option>';
-  const vals = [...new Set(AData.map(d=>d.init_home_handicap))].sort((a,b)=>a-b);
-  vals.forEach(v=>{
-    const opt = document.createElement("option");
-    opt.value = v; opt.textContent = v;
-    sel.appendChild(opt);
-  });
-}
+    // 2. 當公司改變，載入並填值
+    async function onCompanyChange() {
+      const company = this.value;
+      currentData = await loadData(company);
+      populateHandicapOptions();
+    }
 
-function asianSearch() {
-  const handicap = document.getElementById("asianHandicap").value;
-  const homeMin = parseFloat(document.getElementById("asianHomeMin").value)||-Infinity;
-  const homeMax = parseFloat(document.getElementById("asianHomeMax").value)||Infinity;
-  const awayMin = parseFloat(document.getElementById("asianAwayMin").value)||-Infinity;
-  const awayMax = parseFloat(document.getElementById("asianAwayMax").value)||Infinity;
-  const res = AData.filter(d=>{
-    return (handicap===""||d.init_home_handicap==handicap)
-      && d.init_home_odds>=homeMin && d.init_home_odds<=homeMax
-      && d.init_away_odds>=awayMin && d.init_away_odds<=awayMax;
-  });
-  // 統計
-  const win = res.filter(d=>d.result=="Home").length;
-  const draw = res.filter(d=>d.result=="Draw").length;
-  const lose = res.filter(d=>d.result=="Away").length;
-  const total = res.length;
-  document.getElementById("asianStats").innerHTML =
-    `贏盤 ${win} (${(win/total*100||0).toFixed(1)}%) `+
-    `和盤 ${draw} (${(draw/total*100||0).toFixed(1)}%) `+
-    `輸盤 ${lose} (${(lose/total*100||0).toFixed(1)}%) 總 ${total}`;
-  // 圖表
-  new Chart(document.getElementById("asianChart"),{
-    type:"pie",
-    data:{labels:["Win","Draw","Lose"], datasets:[{data:[win,draw,lose]}]}
-  });
-  // 表格
-  const tbody = document.querySelector("#asianTable tbody");
-  tbody.innerHTML = "";
-  res.slice(0,100).forEach(d=>{
-    const tr=document.createElement("tr");
-    ["match_date","match","init_home_handicap","init_home_odds","init_away_odds",
-     "final_home_handicap","final_home_odds","final_away_odds","result"]
-    .forEach(key=>{
-      const td=document.createElement("td");
-      td.textContent=d[key]; tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-}
+    // 3. 載入多檔 JSON 並合併
+    async function loadData(company) {
+      const urls = fileMap[company] || [];
+      try {
+        const parts = await Promise.all(
+          urls.map(u => fetch(u).then(r => r.ok ? r.json() : Promise.reject(u)))
+        );
+        return parts.flat();
+      } catch(err) {
+        console.error('載入失敗', err);
+        return [];
+      }
+    }
 
-document.addEventListener("DOMContentLoaded",()=>{
-  // 填入博彩公司下拉
-  const bookieSel = document.getElementById("bookieSelect");
-  Object.keys(fileMap).forEach(bk=>{
-    const opt=document.createElement("option");
-    opt.value=bk; opt.textContent=bk;
-    bookieSel.appendChild(opt);
-  });
-  // 監聽變更
-  bookieSel.addEventListener("change",()=>{
-    loadDataForCompany(bookieSel.value).then(()=>{
-      initAsian();
-      // 清除舊結果
-      document.getElementById("asianStats").innerHTML="";
-      document.querySelector("#asianTable tbody").innerHTML="";
-      document.getElementById("asianChart").getContext("2d").clearRect(0,0,400,400);
-    });
-  });
-  // 點擊搜尋
-  document.getElementById("asianSearchBtn").addEventListener("click",asianSearch);
-  // 初始載入
-  bookieSel.value = Object.keys(fileMap)[0];
-  loadDataForCompany(bookieSel.value).then(initAsian);
-});
-</script>
+    // 4. 填充「初盤」和「終盤」下拉選單
+    function populateHandicapOptions() {
+      const initSel = document.getElementById('initialHandicap');
+      const finalSel = document.getElementById('finalHandicap');
+      initSel.innerHTML = '<option value="">全部</option>';
+      finalSel.innerHTML = '<option value="">全部</option>';
+      const all = currentData.map(r=>r.initial_handicap)
+                             .concat(currentData.map(r=>r.final_handicap));
+      Array.from(new Set(all)).sort((a,b)=>a-b).forEach(v=>{
+        if(v==null||v==='') return;
+        const o1 = document.createElement('option');
+        o1.value = v; o1.textContent = v;
+        initSel.appendChild(o1);
+        const o2 = o1.cloneNode(true);
+        finalSel.appendChild(o2);
+      });
+    }
+
+    // 5. 篩選並顯示結果
+    function applyFilters() {
+      let data = currentData.slice();
+
+      // 依照輸入欄過濾
+      const f = {
+        initHp:   document.getElementById('initialHandicap').value,
+        finalHp:  document.getElementById('finalHandicap').value,
+        iHomeMin: +document.getElementById('initialHomeMin').value || -Infinity,
+        iHomeMax: +document.getElementById('initialHomeMax').value || Infinity,
+        iAwayMin: +document.getElementById('initialAwayMin').value || -Infinity,
+        iAwayMax: +document.getElementById('initialAwayMax').value || Infinity,
+        fHomeMin: +document.getElementById('finalHomeMin').value || -Infinity,
+        fHomeMax: +document.getElementById('finalHomeMax').value || Infinity,
+        fAwayMin: +document.getElementById('finalAwayMin').value || -Infinity,
+        fAwayMax: +document.getElementById('finalAwayMax').value || Infinity,
+      };
+
+      data = data.filter(r=>{
+        return (f.initHp==='' || r.initial_handicap==f.initHp)
+            && (f.finalHp===''|| r.final_handicap==f.finalHp)
+            && r.initial_home_odds  >= f.iHomeMin
+            && r.initial_home_odds  <= f.iHomeMax
+            && r.initial_away_odds  >= f.iAwayMin
+            && r.initial_away_odds  <= f.iAwayMax
+            && r.final_home_odds    >= f.fHomeMin
+            && r.final_home_odds    <= f.fHomeMax
+            && r.final_away_odds    >= f.fAwayMin
+            && r.final_away_odds    <= f.fAwayMax;
+      });
+
+      renderStats(data);
+      renderChart(data);
+      renderTable(data);
+    }
+
+    // 統計
+    function renderStats(data) {
+      const total = data.length;
+      const win  = data.filter(r=>r.result==='Win').length;
+      const draw = data.filter(r=>r.result==='Draw').length;
+      const lose = data.filter(r=>r.result==='Lose').length;
+      const pct = cnt=> total? (cnt/total*100).toFixed(1):0;
+      document.getElementById('statWin').textContent  = `贏盤 ${win} (${pct(win)}%)`;
+      document.getElementById('statDraw').textContent = `和盤 ${draw} (${pct(draw)}%)`;
+      document.getElementById('statLose').textContent = `輸盤 ${lose} (${pct(lose)}%)`;
+    }
+
+    // 圓餅圖
+    let chart = null;
+    function renderChart(data) {
+      const ctx = document.getElementById('resultChart').getContext('2d');
+      const counts = {
+        Win: data.filter(r=>r.result==='Win').length,
+        Draw: data.filter(r=>r.result==='Draw').length,
+        Lose: data.filter(r=>r.result==='Lose').length,
+      };
+      if(chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Win','Draw','Lose'],
+          datasets: [{
+            data: [counts.Win,counts.Draw,counts.Lose],
+            backgroundColor: ['#007bff','#e83e8c','#fd7e14']
+          }]
+        },
+        options: { legend:{position:'bottom'} }
+      });
+    }
+
+    // 表格
+    function renderTable(data) {
+      const tb = document.querySelector('#resultTable tbody');
+      tb.innerHTML = '';
+      data.forEach(r=>{
+        const tr = document.createElement('tr');
+        ['date','match','initial_handicap','initial_home_odds','initial_away_odds',
+         'final_handicap','final_home_odds','final_away_odds','result']
+        .forEach(key=>{
+          const td = document.createElement('td');
+          td.textContent = r[key];
+          tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+    }
+
+    // 啟動
+    function init() {
+      initCompanySelect();
+      document.getElementById('searchBtn')
+              .addEventListener('click', ()=>applyFilters());
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
 </body>
-</html>
+</html>＇
