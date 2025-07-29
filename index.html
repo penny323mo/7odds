@@ -1,283 +1,307 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>足球賠率篩選工具</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { padding-top: 1.5rem; }
-    .form-section { margin-bottom: 1rem; }
-    #chart-container { width: 200px; margin: 1rem auto; }
-    table th, table td { white-space: nowrap; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>足球賠率篩選工具 ‧ 亞洲盤</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body{padding-top:1.5rem}
+.nav-tabs .nav-link{font-weight:600}
+#chart-container{width:220px;margin:1rem auto}
+table th,table td{white-space:nowrap}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2 class="text-center mb-4">足球賠率篩選工具</h2>
+<div class="container">
+  <h2 class="text-center mb-4">足球賠率篩選工具</h2>
 
-    <!-- 公司選擇 -->
-    <div class="form-group row">
-      <label class="col-sm-2 col-form-label">博彩公司：</label>
-      <div class="col-sm-4">
-        <select id="companySelect" class="form-control"></select>
-      </div>
-    </div>
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link active" href="#">亞洲盤查詢</a></li>
+    <li class="nav-item"><a class="nav-link disabled" href="#">大小球查詢</a></li>
+    <li class="nav-item"><a class="nav-link disabled" href="#">歐洲盤查詢</a></li>
+  </ul>
 
-    <!-- 初盤 -->
-    <div class="form-section border p-3">
-      <h5>初盤</h5>
-      <div class="form-row">
-        <div class="form-group col-md-2">
-          <label>盤口</label>
-          <select id="initialHandicap" class="form-control"></select>
-        </div>
-        <div class="form-group col-md-2">
-          <label>主隊賠率 (min)</label>
-          <input id="initialHomeMin" type="number" step="0.01" class="form-control" placeholder="最小值">
-        </div>
-        <div class="form-group col-md-2">
-          <label>主隊賠率 (max)</label>
-          <input id="initialHomeMax" type="number" step="0.01" class="form-control" placeholder="最大值">
-        </div>
-        <div class="form-group col-md-2">
-          <label>客隊賠率 (min)</label>
-          <input id="initialAwayMin" type="number" step="0.01" class="form-control" placeholder="最小值">
-        </div>
-        <div class="form-group col-md-2">
-          <label>客隊賠率 (max)</label>
-          <input id="initialAwayMax" type="number" step="0.01" class="form-control" placeholder="最大值">
-        </div>
-      </div>
-    </div>
+  <div class="text-right mb-2">版本時間：<span id="verTime"></span></div>
 
-    <!-- 終盤 -->
-    <div class="form-section border p-3">
-      <h5>終盤</h5>
-      <div class="form-row">
-        <div class="form-group col-md-2">
-          <label>盤口</label>
-          <select id="finalHandicap" class="form-control"></select>
-        </div>
-        <div class="form-group col-md-2">
-          <label>主隊賠率 (min)</label>
-          <input id="finalHomeMin" type="number" step="0.01" class="form-control" placeholder="最小值">
-        </div>
-        <div class="form-group col-md-2">
-          <label>主隊賠率 (max)</label>
-          <input id="finalHomeMax" type="number" step="0.01" class="form-control" placeholder="最大值">
-        </div>
-        <div class="form-group col-md-2">
-          <label>客隊賠率 (min)</label>
-          <input id="finalAwayMin" type="number" step="0.01" class="form-control" placeholder="最小值">
-        </div>
-        <div class="form-group col-md-2">
-          <label>客隊賠率 (max)</label>
-          <input id="finalAwayMax" type="number" step="0.01" class="form-control" placeholder="最大值">
-        </div>
-      </div>
-    </div>
-
-    <!-- 搜尋按鈕 -->
-    <div class="text-center mb-4">
-      <button id="searchBtn" class="btn btn-primary">搜尋</button>
-    </div>
-
-    <!-- 統計 -->
-    <div class="text-center mb-4">
-      <span id="statWin">贏盤 0 (0%)</span> /
-      <span id="statDraw">和盤 0 (0%)</span> /
-      <span id="statLose">輸盤 0 (0%)</span>
-    </div>
-    <div id="chart-container">
-      <canvas id="resultChart"></canvas>
-    </div>
-
-    <!-- 結果表格 -->
-    <div class="table-responsive">
-      <table id="resultTable" class="table table-striped table-sm">
-        <thead>
-          <tr>
-            <th>日期</th>
-            <th>比賽</th>
-            <th>初盤</th>
-            <th>初主賠</th>
-            <th>初客賠</th>
-            <th>終盤</th>
-            <th>終主賠</th>
-            <th>終客賠</th>
-            <th>結果</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <div class="form-group row">
+    <label class="col-sm-2 col-form-label">博彩公司：</label>
+    <div class="col-sm-4">
+      <select id="companySel" class="form-control"></select>
     </div>
   </div>
 
-  <!-- 依賴 -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    // ==== 檔案映射（按照你上傳的分割檔名） ====
-    const fileMap = {
-      Bet365:      ['Bet365_1.json','Bet365_2.json','Bet365_3.json','Bet365_4.json'],
-      Crown:       ['Crown_1.json','Crown_2.json','Crown_3.json','Crown_4.json'],
-      Interwetten:['Interwetten_1.json','Interwetten_2.json','Interwetten_3.json'],
-      JC:          ['JC_1.json','JC_2.json','JC_3.json'],
-      Ladbrokes:   ['Ladbrokes_1.json','Ladbrokes_2.json','Ladbrokes_3.json'],
-      Macauslot:   ['Macauslot_1.json','Macauslot_2.json','Macauslot_3.json','Macauslot_4.json'],
-      WilliamHill: ['WilliamHill_1.json','WilliamHill_2.json','WilliamHill_3.json'],
-    };
+  <!-- 初盤 -->
+  <div class="border p-3 mb-3">
+    <h5>初盤</h5>
+    <div class="form-row">
+      <div class="form-group col-md-2">
+        <label>盤口</label>
+        <select id="iHcapSel" class="form-control"></select>
+      </div>
+      <div class="form-group col-md-2">
+        <label>主隊賠率&nbsp;Min</label>
+        <input id="iHomeMin" type="number" step="0.01" class="form-control">
+      </div>
+      <div class="form-group col-md-2">
+        <label>主隊賠率&nbsp;Max</label>
+        <input id="iHomeMax" type="number" step="0.01" class="form-control">
+      </div>
+      <div class="form-group col-md-2">
+        <label>客隊賠率&nbsp;Min</label>
+        <input id="iAwayMin" type="number" step="0.01" class="form-control">
+      </div>
+      <div class="form-group col-md-2">
+        <label>客隊賠率&nbsp;Max</label>
+        <input id="iAwayMax" type="number" step="0.01" class="form-control">
+      </div>
+    </div>
+  </div>
 
-    // 全局變數
-    let currentData = [];
+  <!-- 終盤 -->
+  <div class="border p-3 mb-3">
+    <h5>終盤</h5>
+    <div class="form-row">
+      <div class="form-group col-md-2">
+        <label>盤口</label>
+        <select id="fHcapSel" class="form-control"></select>
+      </div>
+      <div class="form-group col-md-2">
+        <label>主隊賠率&nbsp;Min</label>
+        <input id="fHomeMin" type="number" step="0.01" class="form-control">
+      </div>
+      <div class="form-group col-md-2">
+        <label>主隊賠率&nbsp;Max</label>
+        <input id="fHomeMax" type="number" step="0.01" class="form-control">
+      </div>
+      <div class="form-group col-md-2">
+        <label>客隊賠率&nbsp;Min</label>
+        <input id="fAwayMin" type="number" step="0.01" class="form-control">
+      </div>
+      <div class="form-group col-md-2">
+        <label>客隊賠率&nbsp;Max</label>
+        <input id="fAwayMax" type="number" step="0.01" class="form-control">
+      </div>
+    </div>
+  </div>
 
-    // 1. 初始化公司下拉
-    function initCompanySelect() {
-      const sel = document.getElementById('companySelect');
-      sel.innerHTML = '<option disabled selected>請選擇</option>';
-      Object.keys(fileMap).forEach(c => {
-        const o = document.createElement('option');
-        o.value = c; o.textContent = c;
-        sel.appendChild(o);
-      });
-      sel.addEventListener('change', onCompanyChange);
-    }
+  <div class="text-center mb-3">
+    <button id="searchBtn" class="btn btn-primary">搜尋</button>
+  </div>
 
-    // 2. 當公司改變，載入並填值
-    async function onCompanyChange() {
-      const company = this.value;
-      currentData = await loadData(company);
-      populateHandicapOptions();
-    }
+  <!-- 統計 -->
+  <div class="text-center mb-2">
+    <span id="statWin">贏盤 0 (0%)</span> /
+    <span id="statDraw">走水 0 (0%)</span> /
+    <span id="statLose">輸盤 0 (0%)</span> 總 <span id="statTotal">0</span>
+  </div>
+  <div id="chart-container"><canvas id="pieChart"></canvas></div>
 
-    // 3. 載入多檔 JSON 並合併
-    async function loadData(company) {
-      const urls = fileMap[company] || [];
-      try {
-        const parts = await Promise.all(
-          urls.map(u => fetch(u).then(r => r.ok ? r.json() : Promise.reject(u)))
-        );
-        return parts.flat();
-      } catch(err) {
-        console.error('載入失敗', err);
-        return [];
-      }
-    }
+  <!-- 表格 -->
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered" id="resTable">
+      <thead class="thead-light">
+        <tr>
+          <th>日期</th><th>比賽</th>
+          <th>初盤</th><th>初主</th><th>初客</th>
+          <th>終盤</th><th>終主</th><th>終客</th>
+          <th>結果</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
 
-    // 4. 填充「初盤」和「終盤」下拉選單
-    function populateHandicapOptions() {
-      const initSel = document.getElementById('initialHandicap');
-      const finalSel = document.getElementById('finalHandicap');
-      initSel.innerHTML = '<option value="">全部</option>';
-      finalSel.innerHTML = '<option value="">全部</option>';
-      const all = currentData.map(r=>r.initial_handicap)
-                             .concat(currentData.map(r=>r.final_handicap));
-      Array.from(new Set(all)).sort((a,b)=>a-b).forEach(v=>{
-        if(v==null||v==='') return;
-        const o1 = document.createElement('option');
-        o1.value = v; o1.textContent = v;
-        initSel.appendChild(o1);
-        const o2 = o1.cloneNode(true);
-        finalSel.appendChild(o2);
-      });
-    }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.getElementById('verTime').textContent = new Date().toLocaleString('zh-HK',{hour12:false});
 
-    // 5. 篩選並顯示結果
-    function applyFilters() {
-      let data = currentData.slice();
+// <================ JSON 檔案映射 =================>
+const fileMap = {
+  Bet365:['Bet365_1.json','Bet365_2.json','Bet365_3.json','Bet365_4.json'],
+  Crown:['Crown_1.json','Crown_2.json','Crown_3.json','Crown_4.json'],
+  Interwetten:['Interwetten_1.json','Interwetten_2.json','Interwetten_3.json'],
+  JC:['JC_1.json','JC_2.json','JC_3.json'],
+  Ladbrokes:['Ladbrokes_1.json','Ladbrokes_2.json','Ladbrokes_3.json'],
+  Macauslot:['Macauslot_1.json','Macauslot_2.json','Macauslot_3.json','Macauslot_4.json'],
+  WilliamHill:['WilliamHill_1.json','WilliamHill_2.json','WilliamHill_3.json']
+};
 
-      // 依照輸入欄過濾
-      const f = {
-        initHp:   document.getElementById('initialHandicap').value,
-        finalHp:  document.getElementById('finalHandicap').value,
-        iHomeMin: +document.getElementById('initialHomeMin').value || -Infinity,
-        iHomeMax: +document.getElementById('initialHomeMax').value || Infinity,
-        iAwayMin: +document.getElementById('initialAwayMin').value || -Infinity,
-        iAwayMax: +document.getElementById('initialAwayMax').value || Infinity,
-        fHomeMin: +document.getElementById('finalHomeMin').value || -Infinity,
-        fHomeMax: +document.getElementById('finalHomeMax').value || Infinity,
-        fAwayMin: +document.getElementById('finalAwayMin').value || -Infinity,
-        fAwayMax: +document.getElementById('finalAwayMax').value || Infinity,
-      };
+// <================ 欄位對照表 =================>
+const keyMap = {
+  initHcap:'ah_open_line',
+  initHome:'ah_open_home_odds',
+  initAway:'ah_open_away_odds',
+  finalHcap:'ah_close_line',
+  finalHome:'ah_close_home_odds',
+  finalAway:'ah_close_away_odds',
+  score:'full_time_score',
+  homeTeam:'home_team',
+  awayTeam:'away_team',
+  dateTime:'match_datetime'
+};
 
-      data = data.filter(r=>{
-        return (f.initHp==='' || r.initial_handicap==f.initHp)
-            && (f.finalHp===''|| r.final_handicap==f.finalHp)
-            && r.initial_home_odds  >= f.iHomeMin
-            && r.initial_home_odds  <= f.iHomeMax
-            && r.initial_away_odds  >= f.iAwayMin
-            && r.initial_away_odds  <= f.iAwayMax
-            && r.final_home_odds    >= f.fHomeMin
-            && r.final_home_odds    <= f.fHomeMax
-            && r.final_away_odds    >= f.fAwayMin
-            && r.final_away_odds    <= f.fAwayMax;
-      });
+// <================ 盤口轉數值 =================>
+const hcapMap = {
+  '平手':0,'PK':0,
+  '平手/半球':-0.25,'受平手/半球':0.25,
+  '半球':-0.5,'受半球':0.5,
+  '半球/一球':-0.75,'受半球/一球':0.75,
+  '一球':-1,'受一球':1,
+  '一球/球半':-1.25,'受一球/球半':1.25,
+  '球半':-1.5,'受球半':1.5,
+  '球半/兩球':-1.75,'受球半/兩球':1.75,
+  '兩球':-2,'受兩球':2,
+  '兩球/兩球半':-2.25,'受兩球/兩球半':2.25,
+  '兩球半':-2.5,'受兩球半':2.5,
+  '兩球半/三球':-2.75,'受兩球半/三球':2.75,
+  '三球':-3,'受三球':3
+};
+const cnNum={一:1,兩:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9};
+function parseHandicap(str){
+  if(!str) return NaN;
+  if(hcapMap[str]!==undefined) return hcapMap[str];
+  // 「7/7.5」或「受7.5」
+  let m=str.match(/^受?([0-9.]+)(?:\/([0-9.]+))?$/);
+  if(m){let n=parseFloat(m[1]);return str.startsWith('受')?n:-n;}
+  // 「七球」「受七球半」
+  m=str.match(/^受?([一二三四五六七八九])球(半)?$/);
+  if(m){
+    let n=cnNum[m[1]]+(m[2]?0.5:0);
+    return str.startsWith('受')?n:-n;
+  }
+  return NaN;
+}
 
-      renderStats(data);
-      renderChart(data);
-      renderTable(data);
-    }
+function asianResult(h,a,lineStr){
+  const hcap=parseHandicap(lineStr);
+  if(isNaN(hcap)) return 'Unknown';
+  const diff=h-a+hcap;
+  if(diff>0) return 'Win';
+  if(diff===0) return 'Draw';
+  return 'Lose';
+}
 
-    // 統計
-    function renderStats(data) {
-      const total = data.length;
-      const win  = data.filter(r=>r.result==='Win').length;
-      const draw = data.filter(r=>r.result==='Draw').length;
-      const lose = data.filter(r=>r.result==='Lose').length;
-      const pct = cnt=> total? (cnt/total*100).toFixed(1):0;
-      document.getElementById('statWin').textContent  = `贏盤 ${win} (${pct(win)}%)`;
-      document.getElementById('statDraw').textContent = `和盤 ${draw} (${pct(draw)}%)`;
-      document.getElementById('statLose').textContent = `輸盤 ${lose} (${pct(lose)}%)`;
-    }
+// ========== 全局資料 ==========
+let fullData=[];
+let currentCompany='';
+let pieChart=null;
 
-    // 圓餅圖
-    let chart = null;
-    function renderChart(data) {
-      const ctx = document.getElementById('resultChart').getContext('2d');
-      const counts = {
-        Win: data.filter(r=>r.result==='Win').length,
-        Draw: data.filter(r=>r.result==='Draw').length,
-        Lose: data.filter(r=>r.result==='Lose').length,
-      };
-      if(chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: ['Win','Draw','Lose'],
-          datasets: [{
-            data: [counts.Win,counts.Draw,counts.Lose],
-            backgroundColor: ['#007bff','#e83e8c','#fd7e14']
-          }]
-        },
-        options: { legend:{position:'bottom'} }
-      });
-    }
+// ========== 初始化公司下拉 ==========
+const companySel=document.getElementById('companySel');
+Object.keys(fileMap).forEach(c=>{
+  const opt=document.createElement('option');
+  opt.value=c;opt.textContent=c;
+  companySel.appendChild(opt);
+});
+companySel.addEventListener('change',async()=>{
+  currentCompany=companySel.value;
+  fullData=await loadCompanyData(currentCompany);
+  populateHandicapSelects(fullData);
+  clearDisplay();
+});
 
-    // 表格
-    function renderTable(data) {
-      const tb = document.querySelector('#resultTable tbody');
-      tb.innerHTML = '';
-      data.forEach(r=>{
-        const tr = document.createElement('tr');
-        ['date','match','initial_handicap','initial_home_odds','initial_away_odds',
-         'final_handicap','final_home_odds','final_away_odds','result']
-        .forEach(key=>{
-          const td = document.createElement('td');
-          td.textContent = r[key];
-          tr.appendChild(td);
-        });
-        tb.appendChild(tr);
-      });
-    }
+// ========== 讀取公司多檔 JSON ==========
+async function loadCompanyData(comp){
+  const list=fileMap[comp]||[];
+  const arr=await Promise.all(list.map(f=>fetch(f).then(r=>r.json())));
+  return arr.flat().map(r=>{
+    const [h,a]=r[keyMap.score].split(':').map(Number);
+    r.calc_result=asianResult(h,a,r[keyMap.finalHcap]);
+    return r;
+  });
+}
 
-    // 啟動
-    function init() {
-      initCompanySelect();
-      document.getElementById('searchBtn')
-              .addEventListener('click', ()=>applyFilters());
-    }
+// ========== 填盤口下拉 ==========
+const iHcapSel=document.getElementById('iHcapSel');
+const fHcapSel=document.getElementById('fHcapSel');
+function populateHandicapSelects(data){
+  const set=new Set(data.map(r=>r[keyMap.initHcap]).concat(data.map(r=>r[keyMap.finalHcap])));
+  const html=['<option value="">全部</option>',...Array.from(set).filter(x=>x).map(x=>`<option>${x}</option>`)].join('');
+  iHcapSel.innerHTML=html;
+  fHcapSel.innerHTML=html;
+}
 
-    document.addEventListener('DOMContentLoaded', init);
-  </script>
+// ========== 搜尋 ==========
+document.getElementById('searchBtn').addEventListener('click',()=>{
+  if(!currentCompany){alert('請先選擇公司');return;}
+  const rows=applyFilter();
+  renderTable(rows);
+  renderStats(rows);
+});
+
+function num(v,def){v=parseFloat(v);return isNaN(v)?def:v;}
+function applyFilter(){
+  const ihc=iHcapSel.value, fhc=fHcapSel.value;
+  const ihmin=num(document.getElementById('iHomeMin').value,-Infinity);
+  const ihmax=num(document.getElementById('iHomeMax').value, Infinity);
+  const iamin=num(document.getElementById('iAwayMin').value,-Infinity);
+  const iamax=num(document.getElementById('iAwayMax').value, Infinity);
+  const fhmin=num(document.getElementById('fHomeMin').value,-Infinity);
+  const fhmax=num(document.getElementById('fHomeMax').value, Infinity);
+  const famin=num(document.getElementById('fAwayMin').value,-Infinity);
+  const famax=num(document.getElementById('fAwayMax').value, Infinity);
+
+  return fullData.filter(r=>{
+    const ih=r[keyMap.initHcap], fh=r[keyMap.finalHcap];
+    const ihome=+r[keyMap.initHome], iaway=+r[keyMap.initAway];
+    const fhome=+r[keyMap.finalHome], faway=+r[keyMap.finalAway];
+    return (ihc===''||ihc===ih) &&
+           (fhc===''||fhc===fh) &&
+           ihome>=ihmin&&ihome<=ihmax &&
+           iaway>=iamin&&iaway<=iamax &&
+           fhome>=fhmin&&fhome<=fhmax &&
+           faway>=famin&&faway<=famax;
+  });
+}
+
+// ========== 顯示表格 ==========
+function renderTable(rows){
+  const tbody=document.querySelector('#resTable tbody');
+  tbody.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    const cols=[
+      (r[keyMap.dateTime]||'').split(' ')[0],
+      `${r[keyMap.homeTeam]} vs ${r[keyMap.awayTeam]}`,
+      r[keyMap.initHcap],r[keyMap.initHome],r[keyMap.initAway],
+      r[keyMap.finalHcap],r[keyMap.finalHome],r[keyMap.finalAway],
+      r.calc_result
+    ];
+    cols.forEach(v=>{
+      const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+// ========== 統計 & 圖表 ==========
+function renderStats(rows){
+  const tot=rows.length;
+  const win=rows.filter(r=>r.calc_result==='Win').length;
+  const draw=rows.filter(r=>r.calc_result==='Draw').length;
+  const lose=rows.filter(r=>r.calc_result==='Lose').length;
+  const pct=x=>tot?((x/tot*100).toFixed(1)):'0';
+  document.getElementById('statWin').textContent=`贏盤 ${win} (${pct(win)}%)`;
+  document.getElementById('statDraw').textContent=`走水 ${draw} (${pct(draw)}%)`;
+  document.getElementById('statLose').textContent=`輸盤 ${lose} (${pct(lose)}%)`;
+  document.getElementById('statTotal').textContent=tot;
+
+  if(pieChart) pieChart.destroy();
+  pieChart=new Chart(document.getElementById('pieChart'),{
+    type:'pie',
+    data:{labels:['Win','Draw','Lose'],
+          datasets:[{data:[win,draw,lose]}]},
+    options:{responsive:true,legend:{position:'bottom'}}
+  });
+}
+
+function clearDisplay(){
+  document.querySelector('#resTable tbody').innerHTML='';
+  renderStats([]);
+}
+
+</script>
 </body>
-</html>＇
+</html>
