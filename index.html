@@ -113,6 +113,12 @@ table th,table td{white-space:nowrap}
   </div>
 </div>
 
+<!-- 頁面一 load 完即刻觸發公司 change 事件 -->
+window.addEventListener('DOMContentLoaded', () => {
+  companySel.selectedIndex = 0;                     // 預設第一間（Bet365）
+  companySel.dispatchEvent(new Event('change'));    // 人手「click」一次
+});
+  
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.getElementById('verTime').textContent = new Date().toLocaleString('zh-HK',{hour12:false});
